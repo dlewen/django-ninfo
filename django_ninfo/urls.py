@@ -6,7 +6,7 @@ from django_ninfo import views
 from rest_framework import routers
 router = routers.DefaultRouter()
 
-router.register(r'plugins', views.PluginViewSet, base_name="plugins")
+router.register(r'plugins', views.PluginViewSet, basename="plugins")
 
 app_name = 'django-ninfo'
 urlpatterns = [
