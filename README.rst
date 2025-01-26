@@ -17,4 +17,4 @@ Quick start
 
       url(r'^ninfo/', include('django_ninfo.urls')),
 
-3. Run `python manage.py syncdb` to create the ninfo table models.
+3. Run `python manage.py migrate` to create the ninfo table models.

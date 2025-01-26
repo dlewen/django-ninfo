@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.views.generic import TemplateView
-from django.conf.urls import url, include
+from django.urls import url, include
 from django_ninfo import views
 
 from rest_framework import routers

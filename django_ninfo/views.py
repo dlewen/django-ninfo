@@ -60,7 +60,7 @@ class PluginResult(views.APIView):
         func = mapping[format]
         try:
             resp = getattr(P, func)(plugin, arg)
-        except PluginError, e:
+        except PluginError as e:
             resp = "Error: %r" % e
         timeout = P.get_plugin(plugin).cache_timeout or 60
         headers = {'Cache-Control':  'max-age=%d' % timeout}
