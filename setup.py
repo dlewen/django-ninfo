@@ -8,7 +8,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='django-ninfo',
-    version='0.5.1',
+    version='0.6.1',
     packages=['django_ninfo'],
     include_package_data=True,
     license='BSD License',  # example license
