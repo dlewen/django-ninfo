@@ -159,64 +159,6 @@
       </ul>
     </div>
 
-<nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark" ng-controller="Single">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="#/">Ninfo</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    
-    <div class="collapse navbar-collapse" id="navbarCollapse">
-      <ul class="navbar-nav me-2 mb-2 mb-md-0">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="#/multiple">Multi Search</a>
-        </li>
-      </ul>
-      
-      <!-- Search Form with clear button -->
-      <form class="d-flex flex-grow-1 me-2" ng-submit="lookup()">
-        <div class="input-group">
-          <div class="position-relative flex-grow-1">
-            <input type="search" 
-                   class="form-control" 
-                   placeholder="Search" 
-                   ng-model="arg" 
-                   required 
-                   aria-label="Search">
-            <button type="button" 
-                    class="btn-close search-clear-btn" 
-                    aria-label="Clear search"
-                    ng-click="arg = ''"
-                    ng-show="arg"></button>
-          </div>
-          <button class="btn btn-outline-light" type="submit">Search</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</nav>
-
-<style>
-.search-clear-btn {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 5;
-  background-color: transparent;
-  opacity: 0.6;
-  padding: 0.25rem;
-}
-
-.search-clear-btn:hover {
-  opacity: 1;
-}
-
-/* Add padding to input to prevent text from going under the clear button */
-.input-group input[type="search"] {
-  padding-right: 35px;
-}
-</style>
 
 <main class="container">
       <div class="login-container">
