@@ -1,4 +1,5 @@
-<h1>Multiple Search</h1>
+<div class="bg-body-tertiary p-3 rounded mt-4 mb-3">
+<h3>Multiple Search</h3>
 
 <div class="progress" ng-show="status.started">
   <div class="bar bar-success" ng-style="bar_success()"></div>
@@ -8,20 +9,26 @@
 <form ng-submit="lookup()">
 
 <fieldset>
-  <legend>Select plugins</legend>
-  <textarea rows="8" class="span6" ng-model="q"></textarea> <br>
-  <button type="submit" class="btn btn-primary">Lookup</button> <br>
-  <a ng-click="toggle_all()" >toggle all</a> <br>
-  <label class="checkbox" ng-repeat="p in plugins">
-    <input type="checkbox" ng-model="p.checked"></input>
-    {{p.name}} - {{p.title}}
+  <div class="input-group">
+    <span class="input-group-text">Multi Search</span>
+    <textarea rows="8" class="form-control" ng-model="q"></textarea>
+  </div>
+  <!--textarea rows="8" class="span16" ng-model="q"></textarea> <br-->
+  <button type="submit" class="btn btn-primary my-1">Lookup</button> <br>
+  <legend>Select Plugins</legend>
+  <div class="form-check form-check-inline"> <a class="btn btn-primary my-1" role="button" ng-click="toggle_all()" >toggle all</a> </div>
+  <div class="form-check form-check-inline" ng-repeat="p in plugins">
+    <label class="form-check-label checkbox">
+    <input class="form-check-input" type="checkbox" ng-model="p.checked"></input>
+    {{p.title}}
   </label>
+  </div>
 
 </fieldset>
 </form>
-
-<div ng-repeat="a in args">
-    <h2>{{a}}</h2>
+</div>
+<div class="bg-body-tertiary p-3 rounded mb-2" ng-repeat="a in args">
+    <h3>{{a}}</h3>
     <div ng-repeat="p in plugins | filter:{checked:true}">
         <result arg="a" plugin="p">
         </result>

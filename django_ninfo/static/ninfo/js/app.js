@@ -135,35 +135,42 @@ function Multiple($scope, $routeParams, $http) {
 
 app.directive('result', function($http, $sce) {
     return {
-    restrict: 'E',
-    scope: {arg: '=arg', plugin: '=plugin'},
-    link: function($scope, $element, $attrs){
-        $scope.result=$sce.trustAsHtml("Loading...");
-        $scope.plugin.running=true;
-        $scope.$parent.status.started=true;
-        $scope.$parent.status.running++;
-        $http.get("/ninfo/api/plugins/" + $scope.plugin.name + "/html/" + $scope.arg).success(function(data){
-            html = $sce.trustAsHtml(data);
-            $scope.plugin.result=html;
-            $scope.result=html;
-            $scope.plugin.running=false;
-            $scope.$parent.status.running--;
-            if(data) {
-                $scope.$parent.status.success++;
-            } else {
-                $scope.$parent.status.empty++;
-            }
-        }).error(function (){
-            $scope.$parent.status.running--;
-            $scope.$parent.status.error++;
-            $scope.result=$sce.trustAsHtml("");
-        });
-    },
-    template:
-    '<div ng-show="result" id="result_{{plugin.name}}">' +
-    '<h2>{{plugin.name}} - {{plugin.title}} </h2>' +
-    '<div ng-bind-html="result"></div>' +
-    '<hr>' +
-    '</div>'
+        restrict: 'E',
+        scope: {arg: '=arg', plugin: '=plugin'},
+        link: function($scope, $element, $attrs){
+            $scope.result = $sce.trustAsHtml("Loading...");
+            $scope.plugin.running = true;
+            $scope.plugin.hasResult = false;  // Initialize visibility flag
+            $scope.$parent.status.started = true;
+            $scope.$parent.status.running++;
+            
+            $http.get("/ninfo/api/plugins/" + $scope.plugin.name + "/html/" + $scope.arg)
+                .success(function(data){
+                    if(data && data.trim()) {
+                        html = $sce.trustAsHtml(data);
+                        $scope.plugin.result = html;
+                        $scope.result = html;
+                        $scope.plugin.hasResult = true;  // Set visibility flag
+                        $scope.$parent.status.success++;
+                    } else {
+                        $scope.result = null;
+                        $scope.plugin.hasResult = false;  // Hide if no content
+                        $scope.$parent.status.empty++;
+                    }
+                    $scope.plugin.running = false;
+                    $scope.$parent.status.running--;
+                })
+                .error(function(){
+                    $scope.$parent.status.running--;
+                    $scope.$parent.status.error++;
+                    $scope.result = null;
+                    $scope.plugin.hasResult = false;  // Hide on error
+                });
+        },
+        template:
+            '<div class="bg-body-tertiary p-3 rounded mb-3" ng-if="result">' +
+            '<h2>{{plugin.title}}</h2>' +
+            '<div ng-bind-html="result"></div>' +
+            '</div>'
     };
 });

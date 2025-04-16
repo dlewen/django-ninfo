@@ -1,23 +1,48 @@
-<h1>Single Search</h1>
-<form class="form-search" ng-submit="lookup()">
-  <input type="search" class="input-medium search-query" ng-model="arg" required autofocus>
-  <button type="submit" class="btn btn-primary">Lookup</button>
-</form>
+<div class="bg-body-tertiary p-3 rounded mt-4 mb-3">
+    <!-- Progress bar -->
+    <div class="progress mb-3" ng-show="status.started" style="height: 20px;">
+        <div class="progress-bar bg-success" 
+             ng-style="bar_success()" 
+             role="progressbar" 
+             aria-valuemin="0" 
+             aria-valuemax="100">
+            {{status.success}}
+        </div>
+        <div class="progress-bar bg-warning" 
+             ng-style="bar_empty()" 
+             role="progressbar" 
+             aria-valuemin="0" 
+             aria-valuemax="100">
+            {{status.empty}}
+        </div>
+        <div class="progress-bar bg-danger" 
+             ng-style="bar_error()" 
+             role="progressbar" 
+             aria-valuemin="0" 
+             aria-valuemax="100">
+            {{status.error}}
+        </div>
+    </div>
 
-<div class="progress" ng-show="status.started">
-  <div class="bar bar-success" ng-style="bar_success()"></div>
-  <div class="bar bar-warning" ng-style="bar_empty()"></div>
-  <div class="bar bar-danger" ng-style="bar_error()"></div>
+    <!-- Navigation pills -->
+    <nav>
+        <ul class="nav nav-pills gap-2 flex-wrap">
+            <li class="nav-item" ng-repeat="p in plugins | filter:{checked:true}" ng-show="p.hasResult">
+                <button class="nav-link btn btn-link px-3 py-1" 
+                        ng-click="scroll_to(p.name)"
+                        type="button">
+                    {{p.name}}
+                </button>
+            </li>
+        </ul>
+    </nav>
 </div>
 
-<ul class="nav nav-pills">
-  <li ng-repeat="p in plugins | filter:{checked:true}">
-    <a ng-show="p.result" ng-click="scroll_to(p.name)">{{p.name}}</a>
-  </li>
-</ul>
+
 
 <div ng-repeat="p in plugins | filter:{checked:true}">
-    <result arg="arg" plugin="p">
+    <result arg="arg" plugin="p" ng-show="p.hasResult">
     </result>
 </div>
-</ul>
+
+

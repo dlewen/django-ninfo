@@ -219,8 +219,26 @@
 </style>
 
 <main class="container">
-  <!--div class="bg-body-tertiary p-5 rounded"-->  <div ng-view></div>
-  <!--/div--> <!-- /container -->
+      <div class="login-container">
+        <h2>Login</h2>
+        <form method="post">
+          {% csrf_token %}
+          
+          <div class="mb-3">
+            <label for="id_username" class="form-label">Username</label>
+            <input type="text" name="username" id="id_username" class="form-control" required>
+          </div>
+          
+          <div class="mb-3">
+            <label for="id_password" class="form-label">Password</label>
+            <input type="password" name="password" id="id_password" class="form-control" required>
+          </div>
+          
+          <button type="submit" class="btn btn-primary login-btn">Login</button>
+          
+        </form>
+      </div>
+
 </main>
     <!-- Le javascript
     ================================================== -->
