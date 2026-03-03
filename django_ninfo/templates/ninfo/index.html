@@ -1,28 +1,36 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en" ng-app="ninfo" data-bs-theme="auto">
+<!--
+  @decision DEC-ROUTE-001
+  @title Alpine.js SPA — hash-based routing, inline views
+  @status accepted
+  @rationale AngularJS 1.2.6 + jQuery replaced with Alpine.js 3.x (CDN, no
+  build step). Single/Multiple views inlined via x-show instead of separate
+  partial files. All API calls use /api/ (not /ninfo/api/). The Bootstrap 5
+  dark/light theme toggle (color-modes.js) is preserved unchanged.
+-->
+<html lang="en" data-bs-theme="auto">
   <head>
     <script src="{% static "ninfo/bootstrap/js/color-modes.js" %}"></script>
     <meta charset="utf-8">
-    <title>
-    nInfo
-    </title>
+    <title>nInfo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <!-- Le styles -->
+    <!-- Styles -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
     <link href="{% static "ninfo/bootstrap/css/bootstrap.min.css" %}" rel="stylesheet">
+    <link href="{% static "ninfo/css/navbar-fixed.css" %}" rel="stylesheet">
+
     <style>
       body {
-        padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+        padding-top: 60px;
       }
       div.plugin_result {
-          max-height: 400px;
-          overflow: auto;
+        max-height: 400px;
+        overflow: auto;
       }
-
 
       .bd-placeholder-img {
         font-size: 1.125rem;
@@ -101,13 +109,30 @@
         display: block !important;
       }
 
-    </style>
-    <!-- <link href="{% static "ninfo/bootstrap/css/bootstrap-responsive.css" %}" rel="stylesheet"> -->
-    <link href="{% static "ninfo/css/navbar-fixed.css" %}" rel="stylesheet">
+      .search-clear-btn {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 5;
+        background-color: transparent;
+        opacity: 0.6;
+        padding: 0.25rem;
+      }
 
+      .search-clear-btn:hover {
+        opacity: 1;
+      }
+
+      /* Add padding to input to prevent text going under the clear button */
+      .input-group input[type="search"] {
+        padding-right: 35px;
+      }
+    </style>
   </head>
 
   <body>
+    <!-- SVG sprite for theme toggle icons -->
     <svg xmlns="http://www.w3.org/2000/svg" class="d-none">
       <symbol id="check2" viewBox="0 0 16 16">
         <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
@@ -124,6 +149,7 @@
       </symbol>
     </svg>
 
+    <!-- Bootstrap 5 dark/light/auto theme toggle (standalone — not Alpine) -->
     <div class="dropdown position-fixed bottom-0 end-0 mb-3 me-3 bd-mode-toggle">
       <button class="btn btn-bd-primary py-2 dropdown-toggle d-flex align-items-center"
               id="bd-theme"
@@ -159,76 +185,196 @@
       </ul>
     </div>
 
-<nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark" ng-controller="Single">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="#/">Ninfo</a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    
-    <div class="collapse navbar-collapse" id="navbarCollapse">
-      <ul class="navbar-nav me-2 mb-2 mb-md-0">
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="#/multiple">Multi Search</a>
-        </li>
-      </ul>
-      
-      <!-- Search Form with clear button -->
-      <form class="d-flex flex-grow-1 me-2" ng-submit="lookup()">
-        <div class="input-group">
-          <div class="position-relative flex-grow-1">
-            <input type="search" 
-                   class="form-control" 
-                   placeholder="Search" 
-                   ng-model="arg" 
-                   required 
-                   aria-label="Search">
-            <button type="button" 
-                    class="btn-close search-clear-btn" 
-                    aria-label="Clear search"
-                    ng-click="arg = ''"
-                    ng-show="arg"></button>
+    <!-- ================================================================
+         Navbar — contains the persistent single-lookup search form.
+         x-data="singleComponent" spans both the navbar AND the single
+         view below (they share the same Alpine component instance via a
+         common ancestor element wrapping both).
+         ================================================================ -->
+    <div x-data="singleComponent">
+
+      <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#/single">Ninfo</a>
+          <button class="navbar-toggler" type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#navbarCollapse"
+                  aria-controls="navbarCollapse"
+                  aria-expanded="false"
+                  aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav me-2 mb-2 mb-md-0">
+              <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="#/multiple">Multi Search</a>
+              </li>
+            </ul>
+
+            <!-- Search form — always visible, drives single-view route -->
+            <form class="d-flex flex-grow-1 me-2" @submit.prevent="lookup()">
+              <div class="input-group">
+                <div class="position-relative flex-grow-1">
+                  <input type="search"
+                         class="form-control"
+                         placeholder="Search"
+                         x-model="searchArg"
+                         required
+                         aria-label="Search">
+                  <button type="button"
+                          class="btn-close search-clear-btn"
+                          aria-label="Clear search"
+                          @click="searchArg = ''"
+                          x-show="searchArg"></button>
+                </div>
+                <button class="btn btn-outline-light" type="submit">Search</button>
+              </div>
+            </form>
           </div>
-          <button class="btn btn-outline-light" type="submit">Search</button>
         </div>
-      </form>
-    </div>
-  </div>
-</nav>
+      </nav>
 
-<style>
-.search-clear-btn {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 5;
-  background-color: transparent;
-  opacity: 0.6;
-  padding: 0.25rem;
-}
+      <!-- ==============================================================
+           Single view — shown when route is #/single[/arg]
+           ============================================================== -->
+      <main class="container" x-show="$store.route.view === 'single'">
 
-.search-clear-btn:hover {
-  opacity: 1;
-}
+        <!-- Progress bar + plugin nav pills (shown after a search starts) -->
+        <div class="bg-body-tertiary p-3 rounded mt-4 mb-3" x-show="status.started">
 
-/* Add padding to input to prevent text from going under the clear button */
-.input-group input[type="search"] {
-  padding-right: 35px;
-}
-</style>
+          <!-- Three-segment progress bar: success / empty / error -->
+          <div class="progress mb-3" style="height: 20px;">
+            <div class="progress-bar bg-success"
+                 role="progressbar"
+                 :style="{ width: barSuccessWidth }"
+                 aria-valuemin="0"
+                 aria-valuemax="100"
+                 x-text="status.success"></div>
+            <div class="progress-bar bg-warning"
+                 role="progressbar"
+                 :style="{ width: barEmptyWidth }"
+                 aria-valuemin="0"
+                 aria-valuemax="100"
+                 x-text="status.empty"></div>
+            <div class="progress-bar bg-danger"
+                 role="progressbar"
+                 :style="{ width: barErrorWidth }"
+                 aria-valuemin="0"
+                 aria-valuemax="100"
+                 x-text="status.error"></div>
+          </div>
 
-<main class="container">
-  <!--div class="bg-body-tertiary p-5 rounded"-->  <div ng-view></div>
-  <!--/div--> <!-- /container -->
-</main>
-    <!-- Le javascript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
+          <!-- Plugin navigation pills — one per plugin that has a result -->
+          <nav>
+            <ul class="nav nav-pills gap-2 flex-wrap">
+              <template x-for="p in plugins" :key="p.name">
+                <li class="nav-item" x-show="p.checked && p.hasResult">
+                  <button class="nav-link btn btn-link px-3 py-1"
+                          type="button"
+                          @click="scrollTo(p.name)"
+                          x-text="p.name"></button>
+                </li>
+              </template>
+            </ul>
+          </nav>
+        </div>
+
+        <!-- Plugin result cards -->
+        <template x-for="p in plugins" :key="p.name">
+          <div x-show="p.checked && p.hasResult"
+               :id="'result_' + p.name"
+               class="bg-body-tertiary p-3 rounded mb-3">
+            <h2 x-text="p.title"></h2>
+            <div x-html="p.resultHtml"></div>
+          </div>
+        </template>
+
+      </main>
+    </div><!-- /singleComponent wrapper -->
+
+    <!-- ================================================================
+         Multiple view — shown when route is #/multiple
+         ================================================================ -->
+    <main class="container" x-data="multipleComponent" x-show="$store.route.view === 'multiple'">
+
+      <div class="bg-body-tertiary p-3 rounded mt-4 mb-3">
+        <h3>Multiple Search</h3>
+
+        <!-- Progress bar -->
+        <div class="progress mb-3" style="height: 20px;" x-show="status.started">
+          <div class="progress-bar bg-success"
+               role="progressbar"
+               :style="{ width: barSuccessWidth }"
+               aria-valuemin="0"
+               aria-valuemax="100"
+               x-text="status.success"></div>
+          <div class="progress-bar bg-warning"
+               role="progressbar"
+               :style="{ width: barEmptyWidth }"
+               aria-valuemin="0"
+               aria-valuemax="100"
+               x-text="status.empty"></div>
+          <div class="progress-bar bg-danger"
+               role="progressbar"
+               :style="{ width: barErrorWidth }"
+               aria-valuemin="0"
+               aria-valuemax="100"
+               x-text="status.error"></div>
+        </div>
+
+        <!-- Lookup form -->
+        <form @submit.prevent="lookup()">
+          <fieldset>
+            <div class="input-group">
+              <span class="input-group-text">Multi Search</span>
+              <textarea rows="8" class="form-control" x-model="q"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary my-1">Lookup</button>
+
+            <legend>Select Plugins</legend>
+            <div class="form-check form-check-inline">
+              <a class="btn btn-primary my-1" role="button" @click="toggleAll()">toggle all</a>
+            </div>
+            <template x-for="p in plugins" :key="p.name">
+              <div class="form-check form-check-inline">
+                <label class="form-check-label">
+                  <input class="form-check-input" type="checkbox" x-model="p.checked">
+                  <span x-text="p.title"></span>
+                </label>
+              </div>
+            </template>
+          </fieldset>
+        </form>
+      </div>
+
+      <!-- Results: one card per arg -->
+      <template x-for="argObj in args" :key="argObj.value">
+        <div class="bg-body-tertiary p-3 rounded mb-2">
+          <h3 x-text="argObj.value"></h3>
+          <template x-for="p in activatedPlugins" :key="p.name">
+            <div x-show="argObj.results[p.name] && argObj.results[p.name].hasResult"
+                 class="bg-body-tertiary p-3 rounded mb-3">
+              <h4 x-text="p.title"></h4>
+              <div x-html="argObj.results[p.name] ? argObj.results[p.name].html : ''"></div>
+            </div>
+          </template>
+        </div>
+      </template>
+
+    </main>
+
+    <!--
+      Script loading order:
+        1. Bootstrap (sync — needed for theme toggle dropdown)
+        2. app.js (defer) — registers Alpine components + router via alpine:init
+        3. Alpine.js (defer) — must come AFTER app.js so alpine:init listeners
+           are already attached when Alpine fires the event
+      Both app.js and Alpine use `defer` so they execute after DOM parsing,
+      in document order (app.js first, then Alpine).
+    -->
     <script src="{% static "ninfo/bootstrap/js/bootstrap.bundle.min.js" %}"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.6/angular.min.js"></script>
-    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.6/angular-route.min.js"></script>
-    <script src="{% static "ninfo/js/app.js" %}" ></script>
+    <script defer src="{% static "ninfo/js/app.js" %}"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   </body>
 </html>
