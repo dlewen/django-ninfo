@@ -1,3 +1,10 @@
+"""
+Package configuration for django-ninfo.
+
+Installs the django_ninfo reusable Django app which provides a web frontend
+for the ninfo threat intelligence plugin framework, including OIDC authentication
+support via mozilla-django-oidc.
+"""
 import os
 from setuptools import setup
 
@@ -30,5 +37,6 @@ setup(
     install_requires = [
         "djangorestframework",
         "ninfo>=0.3.1",
+        "mozilla-django-oidc>=5.0.0",
     ],
 )
