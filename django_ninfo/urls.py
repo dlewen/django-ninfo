@@ -2,13 +2,13 @@
 URL configuration for the django-ninfo reusable app.
 
 Registers the DRF API endpoints (plugin list, plugin result, extract) plus
-the login-required SPA shell view.  OIDC authentication routes are included
-unconditionally — mozilla-django-oidc is a hard dependency — but they only
-affect behaviour when OIDC is enabled via environment variables.
+the login-required SPA shell view.
 
-The deployment project's ROOT_URLCONF must also include:
+OIDC routes are NOT included here because this app uses app_name namespacing,
+which breaks mozilla-django-oidc's internal reverse() calls.  The deployment
+project's ROOT_URLCONF must include them at the root level:
+
     path('oidc/', include('mozilla_django_oidc.urls'))
-or delegate that responsibility here via the oidc/ prefix below.
 """
 
 from django.contrib.auth.decorators import login_required
@@ -33,12 +33,6 @@ urlpatterns = [
 
     # --- SPA shell (login required) ---
     re_path(r'^$', login_required(TemplateView.as_view(template_name='ninfo/index.html')), name='index'),
-
-    # --- OIDC authentication routes ---
-    # Provides /oidc/authenticate/, /oidc/callback/, /oidc/logout/ etc.
-    # When OIDC is disabled (no env vars), these routes exist but are unused;
-    # LOGIN_URL will point to /accounts/login/ instead.
-    path('oidc/', include('mozilla_django_oidc.urls')),
 
     # --- Logout ---
     # Works for both OIDC and standard Django sessions.
