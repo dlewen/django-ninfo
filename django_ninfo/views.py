@@ -20,7 +20,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer, StaticHTMLRenderer, BaseRenderer
 from rest_framework.authtoken.models import Token
 
-from django.http import Http404
+from django.http import Http404, HttpResponse
 
 import threading
 local_data = threading.local()
@@ -81,6 +81,54 @@ class PluginResult(views.APIView):
         timeout = P.get_plugin(plugin).cache_timeout or 60
         headers = {'Cache-Control':  'max-age=%d' % timeout}
         return Response(resp, headers=headers)
+
+
+class CombinedQueryView(views.APIView):
+    """
+    Query all compatible ninfo plugins for a given argument and return combined output.
+
+    GET /api/query/<arg>         — plain-text output (default), one section per plugin
+    GET /api/query/<arg>.json    — JSON dict {plugin_name: result}
+
+    Optional query parameter:
+        ?plugins=shodan,cymruwhois   — comma-separated list of plugin names to run
+
+    Text format mirrors Ninfo.show_info(): each plugin's output is preceded by a
+    "*** <title> (<description>) ***" header, matching CLI output for consistency.
+
+    @decision DEC-QUERY-001
+    @title CombinedQueryView mirrors show_info() text format
+    @status accepted
+    @rationale Using the same header format ("*** title (description) ***") as the CLI
+    show_info() method ensures text consumers (scripts, MCP tool output) see identical
+    structure regardless of whether they call the CLI or the API. JSON format returns
+    get_info_dict() directly so callers get structured data without re-parsing text.
+    """
+    permission_classes = [IsAuthenticated]
+    renderer_classes = (JSONRenderer, PlainTextRenderer)
+
+    def get(self, request, arg, format="txt"):
+        P = get_info_object()
+
+        # Parse optional plugin filter from query string
+        plugins_param = request.query_params.get("plugins")
+        plugins = [p.strip() for p in plugins_param.split(",")] if plugins_param else None
+
+        if format == "json":
+            data = P.get_info_dict(arg, plugins=plugins)
+            return Response(data)
+
+        # Text format: concatenate per-plugin sections with headers.
+        # Return HttpResponse directly to bypass DRF content negotiation —
+        # an empty string would otherwise be JSON-encoded as '""' by JSONRenderer.
+        parts = []
+        for plugin_obj, result in P.get_info_iter(arg, plugins=plugins):
+            header = "*** %s (%s) ***" % (plugin_obj.title, plugin_obj.description)
+            body = plugin_obj.render_template("text", arg, result) or ""
+            parts.append(header + "\n" + body)
+
+        text = "\n".join(parts)
+        return HttpResponse(text, content_type="text/plain; charset=utf-8")
 
 
 class Extract(views.APIView):
