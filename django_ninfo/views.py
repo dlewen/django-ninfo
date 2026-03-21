@@ -1,8 +1,24 @@
+"""
+Django views for django-ninfo.
+
+@decision DEC-APIKEY-001
+@title DRF TokenAuthentication for per-user API key management
+@status accepted
+@rationale DRF's built-in Token model provides per-user opaque tokens stored in
+the database. ApiKeyView GET returns the existing key (or null if none exists),
+POST regenerates it by deleting and recreating the token. This gives users a
+deterministic way to rotate credentials without admin intervention.
+TokenAuthentication uses the "Authorization: Token <key>" header (not Bearer),
+which is DRF convention. SessionAuthentication is also registered in settings
+so browser-based requests (with CSRF) continue to work transparently alongside
+token auth.
+"""
 from ninfo import Ninfo, PluginError
 from rest_framework import viewsets, views
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer, StaticHTMLRenderer, BaseRenderer
+from rest_framework.authtoken.models import Token
 
 from django.http import Http404
 
@@ -75,3 +91,31 @@ class Extract(views.APIView):
         args = request.GET["q"].split()
         resp = {"args": args}
         return Response(resp)
+
+
+class ApiKeyView(views.APIView):
+    """
+    Manage the DRF auth token (API key) for the authenticated user.
+
+    GET  /api/key/  — Returns {"key": "<token>"} or {"key": null} if none exists.
+    POST /api/key/  — Deletes any existing token and creates a new one.
+                      Returns {"key": "<new-token>"}.
+
+    Requires session or token authentication (IsAuthenticated).
+    TokenAuthentication does not enforce CSRF; SessionAuthentication does.
+    Browser requests via the navbar UI use SessionAuthentication + CSRF cookie.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            token = Token.objects.get(user=request.user)
+            return Response({"key": token.key})
+        except Token.DoesNotExist:
+            return Response({"key": None})
+
+    def post(self, request):
+        # Delete existing token if present, then create a fresh one.
+        Token.objects.filter(user=request.user).delete()
+        token = Token.objects.create(user=request.user)
+        return Response({"key": token.key})
