@@ -147,6 +147,9 @@
       <symbol id="sun-fill" viewBox="0 0 16 16">
         <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0zm0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13zm8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5zM3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8zm10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0zm-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0zm9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707zM4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708z"/>
       </symbol>
+      <symbol id="gear-fill" viewBox="0 0 16 16">
+        <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.86z"/>
+      </symbol>
     </svg>
 
     <!-- Bootstrap 5 dark/light/auto theme toggle (standalone — not Alpine) -->
@@ -231,6 +234,103 @@
                 <button class="btn btn-outline-light" type="submit">Search</button>
               </div>
             </form>
+
+            <!-- API key management dropdown — Alpine component, Bootstrap 5 dropdown -->
+            <div class="dropdown"
+                 x-data="{
+                   apiKey: null,
+                   loaded: false,
+                   copying: false,
+                   getCsrfToken() {
+                     return document.cookie.split('; ')
+                       .find(row => row.startsWith('csrftoken='))
+                       ?.split('=')[1] || '';
+                   },
+                   async fetchKey() {
+                     if (this.loaded) return;
+                     try {
+                       const resp = await fetch('/api/key/', {credentials: 'same-origin'});
+                       const data = await resp.json();
+                       this.apiKey = data.key;
+                     } catch (e) {
+                       this.apiKey = null;
+                     }
+                     this.loaded = true;
+                   },
+                   async generateKey() {
+                     const resp = await fetch('/api/key/', {
+                       method: 'POST',
+                       credentials: 'same-origin',
+                       headers: {'X-CSRFToken': this.getCsrfToken()}
+                     });
+                     const data = await resp.json();
+                     this.apiKey = data.key;
+                   },
+                   async regenerateKey() {
+                     if (!confirm('Regenerate API key? The old key will stop working immediately.')) return;
+                     await this.generateKey();
+                   },
+                   async copyKey() {
+                     if (!this.apiKey) return;
+                     await navigator.clipboard.writeText(this.apiKey);
+                     this.copying = true;
+                     setTimeout(() => { this.copying = false; }, 1500);
+                   }
+                 }">
+              <button class="btn btn-outline-light dropdown-toggle d-flex align-items-center gap-1"
+                      type="button"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                      aria-label="API key settings"
+                      @click="fetchKey()">
+                <svg class="bi" width="1em" height="1em"><use href="#gear-fill"></use></svg>
+                <span class="visually-hidden">API Key</span>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end p-3" style="min-width: 320px;"
+                   @click.stop>
+                <h6 class="dropdown-header px-0 pt-0">API Key</h6>
+
+                <!-- Key exists: show key, copy, regenerate -->
+                <template x-if="loaded && apiKey">
+                  <div>
+                    <code class="d-block text-break mb-2 user-select-all small"
+                          x-text="apiKey"
+                          style="font-family: monospace; word-break: break-all;"></code>
+                    <div class="d-flex gap-2">
+                      <button class="btn btn-sm btn-outline-secondary"
+                              type="button"
+                              @click="copyKey()">
+                        <span x-show="!copying">Copy</span>
+                        <span x-show="copying">Copied!</span>
+                      </button>
+                      <button class="btn btn-sm btn-outline-danger"
+                              type="button"
+                              @click="regenerateKey()">Regenerate</button>
+                    </div>
+                  </div>
+                </template>
+
+                <!-- No key yet: show generate button -->
+                <template x-if="loaded && !apiKey">
+                  <div>
+                    <p class="text-muted small mb-2">No API key yet.</p>
+                    <button class="btn btn-sm btn-primary"
+                            type="button"
+                            @click="generateKey()">Generate</button>
+                  </div>
+                </template>
+
+                <!-- Loading state -->
+                <template x-if="!loaded">
+                  <p class="text-muted small mb-0">Loading...</p>
+                </template>
+
+                <div class="dropdown-divider"></div>
+                <p class="text-muted small mb-0">
+                  Use header: <code>Authorization: Token &lt;key&gt;</code>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </nav>

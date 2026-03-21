@@ -29,6 +29,7 @@ urlpatterns = [
     re_path(r'api/plugins/(?P<plugin>\w*)/(?P<format>[a-z]+)/(?P<arg>.*)$', views.PluginResult.as_view()),
     re_path(r'api/plugins/(?P<plugin>\w*)/(?P<arg>.*)$', views.PluginResult.as_view()),
     re_path(r'api/extract', views.Extract.as_view()),
+    path('api/key/', views.ApiKeyView.as_view(), name='api-key'),
     re_path(r'api/', include(router.urls)),
 
     # --- SPA shell (login required) ---
