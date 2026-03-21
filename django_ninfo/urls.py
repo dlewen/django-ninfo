@@ -31,6 +31,7 @@ urlpatterns = [
     re_path(r'api/query/(?P<arg>.+)\.(?P<format>json|txt)$', views.CombinedQueryView.as_view()),
     re_path(r'api/query/(?P<arg>.+)$', views.CombinedQueryView.as_view()),
     re_path(r'api/extract', views.Extract.as_view()),
+    path('api/me/', views.UserInfoView.as_view(), name='user-info'),
     path('api/key/', views.ApiKeyView.as_view(), name='api-key'),
     re_path(r'api/', include(router.urls)),
 

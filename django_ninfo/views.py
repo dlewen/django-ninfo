@@ -141,6 +141,35 @@ class Extract(views.APIView):
         return Response(resp)
 
 
+class UserInfoView(views.APIView):
+    """
+    Return basic identity information for the authenticated user.
+
+    GET /api/me/ — Returns {"username": "...", "email": "..."}.
+
+    Used by the MCP server to validate DRF bearer tokens: the MCP server
+    calls this endpoint with the user's token and caches the result.
+
+    @decision DEC-ME-001
+    @title /api/me/ for MCP token validation
+    @status accepted
+    @rationale Stateless token validation without exposing user list or admin
+    endpoints. MCP server calls GET /api/me/ with Authorization: Token <key>;
+    a 200 means the token is valid and returns the username for audit logging.
+    DRF's TokenAuthentication handles the token lookup transparently.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response(
+            {
+                "username": request.user.username,
+                "email": request.user.email,
+            }
+        )
+
+
 class ApiKeyView(views.APIView):
     """
     Manage the DRF auth token (API key) for the authenticated user.
