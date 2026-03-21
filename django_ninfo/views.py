@@ -93,16 +93,15 @@ class CombinedQueryView(views.APIView):
     Optional query parameter:
         ?plugins=shodan,cymruwhois   — comma-separated list of plugin names to run
 
-    Text format mirrors Ninfo.show_info(): each plugin's output is preceded by a
-    "*** <title> (<description>) ***" header, matching CLI output for consistency.
+    Text format uses markdown headers (## plugin_name) for each plugin section.
+    Human-readable and renders well in markdown viewers.
 
     @decision DEC-QUERY-001
-    @title CombinedQueryView mirrors show_info() text format
+    @title CombinedQueryView with markdown section headers
     @status accepted
-    @rationale Using the same header format ("*** title (description) ***") as the CLI
-    show_info() method ensures text consumers (scripts, MCP tool output) see identical
-    structure regardless of whether they call the CLI or the API. JSON format returns
-    get_info_dict() directly so callers get structured data without re-parsing text.
+    @rationale Markdown ## headers are human-readable in terminals and render nicely
+    in markdown-capable tools (MCP clients, documentation). Plugin name only (no
+    description) keeps output clean. JSON format returns get_info_dict() directly.
     """
     permission_classes = [IsAuthenticated]
     renderer_classes = (JSONRenderer, PlainTextRenderer)
@@ -123,9 +122,9 @@ class CombinedQueryView(views.APIView):
         # an empty string would otherwise be JSON-encoded as '""' by JSONRenderer.
         parts = []
         for plugin_obj, result in P.get_info_iter(arg, plugins=plugins):
-            header = "*** %s (%s) ***" % (plugin_obj.title, plugin_obj.description)
+            header = "## %s" % plugin_obj.name
             body = plugin_obj.render_template("text", arg, result) or ""
-            parts.append(header + "\n" + body)
+            parts.append(header + "\n\n" + body)
 
         text = "\n".join(parts)
         return HttpResponse(text, content_type="text/plain; charset=utf-8")
