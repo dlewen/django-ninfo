@@ -12,6 +12,8 @@
 <html lang="en" data-bs-theme="auto">
   <head>
     <script src="{% static "ninfo/bootstrap/js/color-modes.js" %}"></script>
+    {{ multi_default_plugins|json_script:"ninfo-multi-default-plugins" }}
+    {{ multi_hidden_plugins|json_script:"ninfo-multi-hidden-plugins" }}
     <meta charset="utf-8">
     <title>nInfo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -215,8 +217,8 @@
               </li>
             </ul>
 
-            <!-- Search form — always visible, drives single-view route -->
-            <form class="d-flex flex-grow-1 me-2" @submit.prevent="lookup()">
+            <!-- Search form — max-width ~sha256 length, search button adjacent -->
+            <form class="d-flex me-2" style="max-width: 580px; flex-grow: 1;" @submit.prevent="lookup()">
               <div class="input-group">
                 <div class="position-relative flex-grow-1">
                   <input type="search"
@@ -234,6 +236,9 @@
                 <button class="btn btn-outline-light" type="submit">Search</button>
               </div>
             </form>
+
+            <!-- Spacer to push settings to the right -->
+            <div class="flex-grow-1"></div>
 
             <!-- API key management dropdown — Alpine component, Bootstrap 5 dropdown -->
             <div class="dropdown"
@@ -326,9 +331,21 @@
                 </template>
 
                 <div class="dropdown-divider"></div>
-                <p class="text-muted small mb-0">
-                  Use header: <code>Authorization: Token &lt;key&gt;</code>
-                </p>
+                <p class="text-muted small mb-1"><strong>Example:</strong></p>
+                <template x-if="loaded && apiKey">
+                  <code class="d-block small mb-0" style="font-size: 0.75rem; word-break: break-all;">curl -H "Authorization: Token <span x-text="apiKey"></span>" {{ request.scheme }}://{{ request.get_host }}/api/query/1.1.1.1</code>
+                </template>
+                <template x-if="loaded && !apiKey">
+                  <code class="d-block small mb-0" style="font-size: 0.75rem;">curl -H "Authorization: Token &lt;key&gt;" {{ request.scheme }}://{{ request.get_host }}/api/query/1.1.1.1</code>
+                </template>
+                {% if ninfo_mcp_url %}
+                <div class="dropdown-divider"></div>
+                <p class="text-muted small mb-0">MCP: <a href="{{ ninfo_mcp_url }}" target="_blank" rel="noopener">{{ ninfo_mcp_url }}</a></p>
+                {% endif %}
+                {% if ninfo_custom_link_url %}
+                <div class="dropdown-divider"></div>
+                <p class="text-muted small mb-0"><a href="{{ ninfo_custom_link_url }}" target="_blank" rel="noopener">{{ ninfo_custom_link_label|default:"Link" }}</a></p>
+                {% endif %}
               </div>
             </div>
           </div>
