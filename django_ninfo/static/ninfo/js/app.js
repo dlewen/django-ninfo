@@ -314,10 +314,20 @@
                     try {
                         const resp = await fetch('/api/plugins/');
                         const data = await resp.json();
-                        this.plugins = data.plugins.map(p => ({
-                            ...p,
-                            checked: true,
-                        }));
+                        // Read server-side plugin config injected by multi_search_config
+                        // context processor via json_script template filter.
+                        const defaults = JSON.parse(
+                            document.getElementById('ninfo-multi-default-plugins')?.textContent || '[]'
+                        );
+                        const hidden = JSON.parse(
+                            document.getElementById('ninfo-multi-hidden-plugins')?.textContent || '[]'
+                        );
+                        this.plugins = data.plugins
+                            .filter(p => !hidden.includes(p.name))
+                            .map(p => ({
+                                ...p,
+                                checked: defaults.length === 0 || defaults.includes(p.name),
+                            }));
                     } catch (e) {
                         console.error('Failed to load plugins', e);
                     }
