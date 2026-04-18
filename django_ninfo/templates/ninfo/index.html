@@ -382,18 +382,36 @@
                  x-text="status.error"></div>
           </div>
 
-          <!-- Plugin navigation pills — one per plugin that has a result -->
-          <nav>
-            <ul class="nav nav-pills gap-2 flex-wrap">
-              <template x-for="p in plugins" :key="p.name">
-                <li class="nav-item" x-show="p.checked && p.hasResult">
-                  <button class="nav-link btn btn-link px-3 py-1"
-                          type="button"
-                          @click="scrollTo(p.name)"
-                          x-text="p.name"></button>
-                </li>
-              </template>
-            </ul>
+          <!-- Plugin navigation: labeled rows by status -->
+          <nav class="d-flex flex-column gap-2">
+
+            <!-- With results (clickable pills) -->
+            <div class="d-flex align-items-center gap-2 flex-wrap" x-show="withResults.length">
+              <span class="fw-semibold">With results:</span>
+              <ul class="nav nav-pills gap-2 flex-wrap mb-0">
+                <template x-for="p in withResults" :key="p.name">
+                  <li class="nav-item">
+                    <button class="nav-link btn btn-link px-3 py-1"
+                            type="button"
+                            @click="scrollTo(p.name)"
+                            x-text="p.name"></button>
+                  </li>
+                </template>
+              </ul>
+            </div>
+
+            <!-- No results (plain text) -->
+            <div x-show="noResults.length">
+              <span class="fw-semibold">No results:</span>
+              <span x-text="noResults.map(p => p.name).join(', ')"></span>
+            </div>
+
+            <!-- Plugins with errors (plain text) -->
+            <div x-show="errored.length">
+              <span class="fw-semibold">Plugins with errors:</span>
+              <span x-text="errored.map(p => p.name).join(', ')"></span>
+            </div>
+
           </nav>
         </div>
 

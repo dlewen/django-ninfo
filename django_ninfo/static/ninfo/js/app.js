@@ -139,6 +139,10 @@
                     return (100 * this.status.error / this.total) + '%';
                 },
 
+                get withResults() { return this.plugins.filter(p => p.checked && p.status === 'success'); },
+                get noResults()   { return this.plugins.filter(p => p.checked && p.status === 'empty'); },
+                get errored()     { return this.plugins.filter(p => p.checked && p.status === 'error'); },
+
                 resetStatus: function () {
                     this.status = {
                         started: false,
@@ -176,6 +180,7 @@
                             running: false,
                             hasResult: false,
                             resultHtml: '',
+                            status: 'pending',
                         }));
                     } catch (e) {
                         console.error('Failed to load plugins', e);
@@ -194,6 +199,7 @@
                         plugin.running = true;
                         plugin.hasResult = false;
                         plugin.resultHtml = '';
+                        plugin.status = 'pending';
                         this.status.started = true;
                         this.status.running++;
 
@@ -203,9 +209,11 @@
                                 if (html && html.trim()) {
                                     plugin.resultHtml = html;
                                     plugin.hasResult = true;
+                                    plugin.status = 'success';
                                     this.status.success++;
                                 } else {
                                     plugin.hasResult = false;
+                                    plugin.status = 'empty';
                                     this.status.empty++;
                                 }
                                 plugin.running = false;
@@ -213,6 +221,7 @@
                             })
                             .catch(() => {
                                 plugin.hasResult = false;
+                                plugin.status = 'error';
                                 plugin.running = false;
                                 this.status.running--;
                                 this.status.error++;
